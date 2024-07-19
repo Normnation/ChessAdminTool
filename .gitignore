@@ -1,0 +1,81 @@
+# Eclipse-specific files
+.classpath
+.project
+.settings/
+.factorypath
+.loadpath
+.recommenders/
+
+# IntelliJ IDEA directories
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Maven-specific files
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven-generated directories
+target/
+dependency/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Key and certificate files
+*.pem
+*.key
+*.cert
+secrets.yml
+
+# Backup and temporary files
+*.bak
+*.tmp
+*.temp
+
+# Environment variables and configuration files
+*.env
+config.json
+settings.json
+settings.ini
+
+# Other sensitive or unnecessary files
+*.tar
+*.tgz
+*.hprof
+*.orig
+
+# Log files
+*.log
+
+# Virtual Machine crash logs, hs_err_pid*
+hs_err_pid*
