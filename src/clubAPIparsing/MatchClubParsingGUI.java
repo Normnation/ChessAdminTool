@@ -4,174 +4,261 @@ import teammatchparsing.ChessClubParses;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.AdjustmentListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.net.URI;
 
-public class MatchClubParsingGUI extends ChessAdminGUI {
-	Color yellow = new Color(255, 255, 0);
-	Color purple = new Color(128, 0, 128);
-	ChessClubParses chessClubParses = new ChessClubParses();
-	private JPanel listPanel;
-	private JScrollPane ratingScrollPane;
-	private DefaultListModel<String> ratingListModel = new DefaultListModel<>();
-	JList<String> ratingList = new JList<>(ratingListModel);
+public class MatchClubParsingGUI extends JFrame {
+    String matchID = "";
+    String teamName = "";
 
-	public MatchClubParsingGUI() {
-		super();
+    private final JProgressBar progressBar = new JProgressBar();
 
-		progressBar.setVisible(false);
-		ImageIcon backgroundPanel = new ImageIcon("/ChessStats/resources/kingchessBackground.jpg");
-		backgroundPanel.setImage(getIconImage());
-		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		setTitle("Match Club Parsing Tool");
-		setBackground(Color.black);
-		usernameHeader.setForeground(yellow);
-		timeoutHeader.setForeground(yellow);
-		usernameHeader.setBackground(Color.BLACK);
-		timeoutHeader.setBackground(Color.BLACK);
-		addRatingPanel();
-		addComponents();
-		synchronizeScrolling(usernameScrollPane, timeoutScrollPane, ratingScrollPane);
-		pack();
+    private final JList<String> usernameList = new JList<>();
+    private final JList<String> timeoutList = new JList<>();
+    private final JList<String> ratingList = new JList<>();
+    private final JList<String> timeout960List = new JList<>();
 
-	}
+    private final DefaultListModel<String> usernameListModel = new DefaultListModel<>();
+    private final DefaultListModel<String> timeoutListModel = new DefaultListModel<>();
+    private final DefaultListModel<String> ratingListModel = new DefaultListModel<>();
+    private final DefaultListModel<String> timeout960ListModel = new DefaultListModel<>();
 
-	public static void synchronizeScrolling(JScrollPane sp1, JScrollPane sp2, JScrollPane sp3) {
-		JScrollBar sb1 = sp1.getVerticalScrollBar();
-		JScrollBar sb2 = sp2.getVerticalScrollBar();
-		JScrollBar sb3 = sp3.getVerticalScrollBar();
+    private final Color yellow = Color.YELLOW;
+    private final Color purple = new Color(128, 0, 128);
+    private final Font headerFont = new Font("Arial", Font.BOLD, 24);
+    private final Font labelFont = new Font("Arial", Font.BOLD, 18);
+    private final Font listFont = new Font("Arial", Font.BOLD, 16);
 
-		AdjustmentListener listener = e -> {
-			JScrollBar sourceScrollBar = (JScrollBar) e.getSource();
-			int value = sourceScrollBar.getValue();
+    private final ChessClubParses chessClubParses = new ChessClubParses();
 
-			if (sourceScrollBar != sb1 && sb1.getValue() != value) {
-				sb1.setValue(value);
-			}
-			if (sourceScrollBar != sb2 && sb2.getValue() != value) {
-				sb2.setValue(value);
-			}
-			if (sourceScrollBar != sb3 && sb3.getValue() != value) {
-				sb3.setValue(value);
-			}
-		};
+    // Methods are referencing TOTAL members so it's never ending when it's done parsing.
+    public void setProgressBarMax(int max) {
+        progressBar.setMaximum(max);
+        progressBar.setValue(0);
+    }
 
-		sb1.addAdjustmentListener(listener);
-		sb2.addAdjustmentListener(listener);
-		sb3.addAdjustmentListener(listener);
-	}
+    public void updateProgressBar(int value) {
+        progressBar.setValue(value);
+        if (progressBar.getValue() == progressBar.getMaximum()) {
+            JOptionPane.showMessageDialog(this,
+                    "Parsing complete. Processed " + value + " players.");
+        }
+    }
 
-	private void addRatingPanel() {
-		JPanel ratingPanel = new JPanel(new BorderLayout());
-		ratingPanel.setBackground(Color.BLACK);
-		ratingPanel.setOpaque(true);
-		configureList(ratingList, "Rating");
+    public MatchClubParsingGUI() {
+        super("Match Club Parsing Tool");
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        getContentPane().setBackground(Color.BLACK);
+        setLayout(new BorderLayout(0, 0));
+        ImageIcon backgroundImage = new ImageIcon("resources/MainChessImage.jpg");
+        setIconImage(backgroundImage.getImage());
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.setBackground(Color.BLACK);
 
-		ratingScrollPane = new JScrollPane(ratingList);
-		JLabel ratingHeader = new JLabel("Ratings:");
-		setupHeader(ratingHeader);
-		ratingHeader.setForeground(yellow);
-		ratingHeader.setBackground(Color.BLACK);
-		ratingPanel.add(ratingHeader, BorderLayout.NORTH);
-		ratingPanel.add(ratingScrollPane, BorderLayout.CENTER);
+        JLabel titleLabel = new JLabel("Match Club Parsing Tool", SwingConstants.CENTER);
+        titleLabel.setForeground(yellow);
+        titleLabel.setFont(headerFont);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-		listPanel = (JPanel) getContentPane();
-		listPanel.setLayout(new GridLayout(1, 3));
-		listPanel.setBackground(Color.BLACK);
-		listPanel.add(usernamePanel);
-		listPanel.add(timeoutPanel);
-		listPanel.add(ratingPanel);
-	}
+        topPanel.add(Box.createVerticalStrut(10));
+        topPanel.add(titleLabel);
+        topPanel.add(Box.createVerticalStrut(5));
 
-	private void addComponents() {
-		JPanel inputPanel = new JPanel(new BorderLayout(10, 10));
-		inputPanel.setBackground(Color.BLACK);
+        progressBar.setVisible(true);
+        progressBar.setPreferredSize(new Dimension(400, 20));
+        progressBar.setBackground(Color.DARK_GRAY);
+        progressBar.setForeground(yellow);
+        progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
+        topPanel.add(progressBar);
+        topPanel.add(Box.createVerticalStrut(10));
 
-		JPanel fieldsPanel = new JPanel();
-		fieldsPanel.setBackground(Color.black);
-		fieldsPanel.setLayout(new BoxLayout(fieldsPanel, BoxLayout.Y_AXIS));
-		fieldsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(topPanel, BorderLayout.NORTH);
 
-		JLabel matchIDLabel = new JLabel("Match ID:");
-		matchIDLabel.setForeground(yellow);
-		matchIDLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-		JTextField matchIDField = new JTextField(20);
+        JPanel rightPanel = new JPanel();
+        rightPanel.setBackground(Color.BLACK);
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		matchIDField.setMaximumSize(new Dimension(Integer.MAX_VALUE, matchIDField.getPreferredSize().height));
-		matchIDField.setAlignmentX(Component.CENTER_ALIGNMENT);
-		matchIDField.setText("Enter Match ID");
+        JLabel matchIDLabel = new JLabel("Match ID:");
+        matchIDLabel.setForeground(yellow);
+        matchIDLabel.setFont(labelFont);
+        matchIDLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		JLabel clubNameLabel = new JLabel("Club Name:");
-		clubNameLabel.setForeground(yellow);
-		clubNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JTextField matchIDField = new JTextField();
+        matchIDField.setFont(listFont);
+        matchIDField.setForeground(yellow);
+        matchIDField.setBackground(Color.BLACK);
+        matchIDField.setCaretColor(yellow);
+        matchIDField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        matchIDField.setMaximumSize(new Dimension(250, 30));
 
-		JTextField clubNameField = new JTextField(20);
-		clubNameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, clubNameField.getPreferredSize().height));
-		clubNameField.setAlignmentX(Component.CENTER_ALIGNMENT);
-		clubNameField.setText("Enter Club Name");
+        JLabel clubNameLabel = new JLabel("Club Name:");
+        clubNameLabel.setForeground(yellow);
+        clubNameLabel.setFont(labelFont);
+        clubNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		fieldsPanel.add(matchIDLabel);
-		fieldsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-		fieldsPanel.add(matchIDField);
-		fieldsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-		fieldsPanel.add(clubNameLabel);
-		fieldsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-		fieldsPanel.add(clubNameField);
+        JTextField clubNameField = new JTextField();
+        clubNameField.setFont(listFont);
+        clubNameField.setForeground(yellow);
+        clubNameField.setBackground(Color.BLACK);
+        clubNameField.setCaretColor(yellow);
+        clubNameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        clubNameField.setMaximumSize(new Dimension(250, 30));
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setBackground(Color.DARK_GRAY);
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        JButton parseButton = new JButton("Parse");
+        parseButton.setFont(labelFont);
+        parseButton.setForeground(purple);
+        parseButton.setBackground(Color.BLACK);
+        parseButton.setBorder(BorderFactory.createLineBorder(yellow, 2));
+        parseButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        parseButton.setPreferredSize(new Dimension(200, 60));
 
-		JButton parseButton = new JButton("Parse match details");
-		parseButton.setFont(preferredFont);
-		parseButton.setForeground(purple);
-		parseButton.setBackground(Color.black);
-		parseButton.setPreferredSize(new Dimension(300, 50));
-		parseButton.setBorder(BorderFactory.createLineBorder(Color.WHITE, 5));
-		buttonPanel.add(parseButton);
-		buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        parseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                matchID = matchIDField.getText().trim();
+                teamName = clubNameField.getText().trim();
 
-		parseButton.addActionListener(e -> {
-			String matchID = matchIDField.getText();
-			String teamName = clubNameField.getText();
-			Boolean isMatchIDEmpty = matchID.isBlank();
-			Boolean isTeamMatchEmpty = teamName.isEmpty();
-			if (isMatchIDEmpty && isTeamMatchEmpty) {
-				JOptionPane.showMessageDialog(this, "The Match ID field is empty as well as theTeam Match field.");
-			} else if (matchID.isEmpty()) {
-				JOptionPane.showMessageDialog(this, "The Match ID field is empty.");
-			} else if (isTeamMatchEmpty) {
-				JOptionPane.showMessageDialog(this, "The Team match field is empty.");
-			} else {
-				chessClubParses.fetchData(usernameListModel, ratingListModel, timeoutListModel, matchID, teamName);
-				usernameListModel.clear();
-				timeoutListModel.clear();
-				ratingListModel.clear();
-			}
-			JOptionPane.showMessageDialog(this,
-					"Checking timeout rate for players on Team " + teamName + " with matchID: " + matchID);
-			matchIDField.setText("");
-			clubNameField.setText("");
-		});
-		inputPanel.add(fieldsPanel, BorderLayout.CENTER);
-		inputPanel.add(buttonPanel, BorderLayout.SOUTH);
+                JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                        "Parsing complete. Returned " + ChessClubParses.totalMembersParsed + " players from " + teamName + " using match ID: " + matchID);
+                if (matchID.isEmpty() && teamName.isEmpty()) {
+                    JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                            "Both Match ID and Club Name fields are empty.");
+                } else if (matchID.isEmpty()) {
+                    JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                            "Match ID is empty.");
+                } else if (teamName.isEmpty()) {
+                    JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                            "Club Name is empty.");
+                } else {
+                    usernameListModel.clear();
+                    timeoutListModel.clear();
+                    ratingListModel.clear();
+                    timeout960ListModel.clear();
 
-		listPanel.add(inputPanel, BorderLayout.NORTH);
-	}
+                    chessClubParses.fetchData(MatchClubParsingGUI.this, usernameListModel,
+                            ratingListModel,
+                            timeoutListModel,
+                            timeout960ListModel,
+                            matchID,
+                            teamName);
 
-	private void configureList(JList<String> list, String prototypeValue) {
-		list.setCellRenderer(new CustomListCellRenderer());
-		list.setPrototypeCellValue(prototypeValue);
-		list.setFont(preferredFont);
-		list.setVisibleRowCount(25);
-		list.setForeground(yellow);
-		list.setBackground(Color.BLACK);
-		list.setBorder(BorderFactory.createLineBorder(Color.white, 2));
-	}
+                }
+                matchIDField.setText("");
+                clubNameField.setText("");
+            }
+        });
 
-	private void setupHeader(JLabel header) {
-		header.setBorder(BorderFactory.createLineBorder(Color.white, 2));
-		header.setForeground(yellow);
-		header.setFont(preferredFont);
-	}
+        usernameList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                @SuppressWarnings("unchecked")
+                JList<String> list = (JList<String>) evt.getSource();
+                if (evt.getClickCount() == 2) {
+                    int index = list.locationToIndex(evt.getPoint());
+                    String clickedUsername = usernameListModel.getElementAt(index);
+                    Desktop desktop = Desktop.getDesktop();
+                    try {
+                        desktop.browse(new URI("https://www.chess.com/member/" + clickedUsername));
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(MatchClubParsingGUI.this, "Unable to open profile page for player " + clickedUsername, "Unable to open profile", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+        rightPanel.add(matchIDLabel);
+        rightPanel.add(matchIDField);
+        rightPanel.add(Box.createVerticalStrut(10));
+        rightPanel.add(clubNameLabel);
+        rightPanel.add(clubNameField);
+        rightPanel.add(Box.createVerticalStrut(10));
+        rightPanel.add(parseButton);
 
+        add(rightPanel, BorderLayout.EAST);
+
+        JPanel centerPanel = new JPanel(new GridLayout(1, 4, 5, 0));
+        centerPanel.setBackground(Color.BLACK);
+
+        JPanel usernamePanel = buildColumnPanel("Username", usernameList, usernameListModel);
+        centerPanel.add(usernamePanel);
+
+        JPanel timeoutPanel = buildColumnPanel("Timeout", timeoutList, timeoutListModel);
+        centerPanel.add(timeoutPanel);
+
+        JPanel ratingPanel = buildColumnPanel("Rating", ratingList, ratingListModel);
+        centerPanel.add(ratingPanel);
+
+        JPanel timeout960Panel = buildColumnPanel("960 Timeout", timeout960List, timeout960ListModel);
+        centerPanel.add(timeout960Panel);
+
+        add(centerPanel, BorderLayout.CENTER);
+
+        synchronizeScrolling(
+                (JScrollPane) usernamePanel.getComponent(1),
+                (JScrollPane) timeoutPanel.getComponent(1),
+                (JScrollPane) ratingPanel.getComponent(1),
+                (JScrollPane) timeout960Panel.getComponent(1)
+        );
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private JPanel buildColumnPanel(String title, JList<String> list, DefaultListModel<String> model) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.BLACK);
+
+        JLabel headerLabel = new JLabel(title, SwingConstants.CENTER);
+        headerLabel.setForeground(yellow);
+        headerLabel.setFont(labelFont);
+        headerLabel.setBorder(BorderFactory.createLineBorder(yellow, 2));
+
+        list.setModel(model);
+        list.setFont(listFont);
+        list.setForeground(yellow);
+        list.setBackground(Color.BLACK);
+        list.setBorder(BorderFactory.createLineBorder(Color.white, 1));
+        list.setVisibleRowCount(20);
+
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setBorder(null);
+
+        panel.add(headerLabel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void synchronizeScrolling(JScrollPane sp1, JScrollPane sp2, JScrollPane sp3, JScrollPane sp4) {
+        JScrollBar sb1 = sp1.getVerticalScrollBar();
+        JScrollBar sb2 = sp2.getVerticalScrollBar();
+        JScrollBar sb3 = sp3.getVerticalScrollBar();
+        JScrollBar sb4 = sp4 != null ? sp4.getVerticalScrollBar() : null;
+
+        sb1.addAdjustmentListener(e -> {
+            sb2.setValue(e.getValue());
+            sb3.setValue(e.getValue());
+            if (sb4 != null) sb4.setValue(e.getValue());
+        });
+        sb2.addAdjustmentListener(e -> {
+            sb1.setValue(e.getValue());
+            sb3.setValue(e.getValue());
+            if (sb4 != null) sb4.setValue(e.getValue());
+        });
+        sb3.addAdjustmentListener(e -> {
+            sb1.setValue(e.getValue());
+            sb2.setValue(e.getValue());
+            if (sb4 != null) sb4.setValue(e.getValue());
+        });
+        if (sb4 != null) {
+            sb4.addAdjustmentListener(e -> {
+                sb1.setValue(e.getValue());
+                sb2.setValue(e.getValue());
+                sb3.setValue(e.getValue());
+            });
+        }
+    }
 }

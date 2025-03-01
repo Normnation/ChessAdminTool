@@ -1,23 +1,45 @@
 package teammatchparsing;
 
 public class Player {
-	private String username;
-	private double timeout_percent;
-	private int rating;
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public Player() {
-	}
+    private String username;
+    private double timeout_percent;
+    private int rating;
+    private double timeout960_percent;
 
-	public String getUsername() {
-		return username;
-	}
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
 
-	public double getTimeout_percent() {
-		return timeout_percent;
-	}
+    public Player() {
+    }
 
-	public int getRating() {
-		return rating;
-	}
+    public String getUsername() {
+        return username;
+    }
+
+    public double getTimeout_percent() {
+        return timeout_percent;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public double getTimeout960_percent() {
+        return timeout960_percent;
+    }
+
+    public void setTimeout_percent(double timeout_percent) {
+        this.timeout_percent = timeout_percent;
+    }
+
+    public void setTimeout960_percent(double timeout960_percent) {
+        this.timeout960_percent = timeout960_percent;
+    }
+
 
 }

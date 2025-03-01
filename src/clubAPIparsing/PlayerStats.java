@@ -3,9 +3,24 @@ package clubAPIparsing;
 import com.google.gson.annotations.SerializedName;
 
 public class PlayerStats {
+    private int rating;
+
+
+
+
+    public int getRating() {
+        return rating;
+    }
 
     @SerializedName("chess_daily")
     private ChessStat chessDaily;
+
+    @SerializedName("chess960_daily")
+    private ChessStat chess960_daily;
+
+    public ChessStat getChess960_daily() {
+        return chess960_daily;
+    }
 
     public ChessStat getChessDaily() {
         return chessDaily;
@@ -42,6 +57,7 @@ public class PlayerStats {
             public double getTimeoutPercent() {
                 return timeoutPercent;
             }
+
         }
     }
 }
