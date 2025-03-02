@@ -1,7 +1,10 @@
-package teammatchparsing;
+package MatchParsing.MatchParsingLogic;
 
-import clubAPIparsing.MatchClubParsingGUI;
-import clubAPIparsing.PlayerStats;
+import MatchParsing.MatchParsingModels.ClubTeam;
+import MatchParsing.MatchParsingModels.MatchWrapper;
+import MatchParsing.MatchParsingModels.Player;
+import MatchParsing.MatchParsingGUI.MatchClubParsingGUI;
+import ClubParsing.ClubParsingModels.PlayerStats;
 import com.google.gson.Gson;
 
 import javax.swing.*;
@@ -9,12 +12,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChessClubParses {
     private static final String PUB_MATCH_ENDPOINT = "https://api.chess.com/pub/match/";
-    public static int totalMembersParsed = 0;
+    private final List<Player> allPlayers = new ArrayList<>();
 
     public void fetchData(
             MatchClubParsingGUI gui,
@@ -25,7 +30,9 @@ public class ChessClubParses {
             String matchId,
             String interestedClubName
     ) {
-        SwingWorker<Void, Player> worker = new SwingWorker<Void, Player>() {
+        SwingWorker<Void, Player> worker = new SwingWorker<>() {
+//            private int progress = 0;
+
             @Override
             protected Void doInBackground() throws Exception {
                 URL url = new URL(PUB_MATCH_ENDPOINT + matchId);
@@ -52,8 +59,26 @@ public class ChessClubParses {
                     ClubTeam clubTeam = entry.getValue();
                     if (clubTeam.getName().equalsIgnoreCase(interestedClubName)) {
                         foundTeam = true;
+                        final int totalPlayers = clubTeam.getPlayers().size();
+
+                        SwingUtilities.invokeLater(() -> {
+                            gui.setProgressBarMax(totalPlayers);
+                            gui.progressBar.setValue(0);
+                            gui.progressBar.setVisible(true);
+                        });
+
+                        AtomicInteger progress = new AtomicInteger(0);
                         clubTeam.getPlayers().forEach(player -> {
                             processPlayer(player, gson);
+                            int currentProgress = progress.incrementAndGet();
+
+                            SwingUtilities.invokeLater(() -> {
+                                gui.updateProgressBar(currentProgress);
+                                gui.progressBar.setString(currentProgress + "/" + totalPlayers + " (" + (int) ((currentProgress * 100.0f) / totalPlayers) + "%)");
+                                if (currentProgress == totalPlayers) {
+                                    gui.progressBar.setVisible(false);
+                                }
+                            });
                         });
                         break;
                     }
@@ -63,6 +88,7 @@ public class ChessClubParses {
                     System.err.println("Team '" + interestedClubName + "' not found in match ID " + matchId);
                 }
                 return null;
+
             }
 
             private void processPlayer(Player player, Gson gson) {
@@ -80,12 +106,11 @@ public class ChessClubParses {
                             statsResponse.append(line);
                         }
                         statsReader.close();
-
                         PlayerStats pStats = gson.fromJson(statsResponse.toString(), PlayerStats.class);
                         updatePlayerStats(player, pStats);
                     }
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    System.out.println("Unable to map player details from endpoint.");
                 }
             }
 
@@ -104,31 +129,40 @@ public class ChessClubParses {
 
             @Override
             protected void process(List<Player> chunks) {
-                for (Player player : chunks) {
-                    if (player.getTimeout_percent() >= 25) {
-                        usernameModel.addElement(player.getUsername());
-                        ratingModel.addElement(String.valueOf(player.getRating()));
-                        timeoutModel.addElement(player.getTimeout_percent() + "%");
-                        if (timeout960Model != null) {
-                            timeout960Model.addElement(player.getTimeout960_percent() + "%");
-                        }
-                        System.out.println(
-                                "Username: " + player.getUsername() +
-                                        ", Rating: " + player.getRating() +
-                                        ", Daily Timeout: " + player.getTimeout_percent() + "%" +
-                                        ", 960 Timeout: " + player.getTimeout960_percent() + "%"
-                        );
+                allPlayers.addAll(chunks);
+                allPlayers.sort((p1, p2) -> Integer.compare(p2.getRating(), p1.getRating()));
+
+                SwingUtilities.invokeLater(() -> {
+                    usernameModel.clear();
+                    ratingModel.clear();
+                    timeoutModel.clear();
+                    if (timeout960Model != null) {
+                        timeout960Model.clear();
                     }
-                }
+
+                    for (Player player : allPlayers) {
+                        if (player.getTimeout_percent() >= 25) {
+                            usernameModel.addElement(player.getUsername());
+                            ratingModel.addElement(String.valueOf(player.getRating()));
+                            timeoutModel.addElement(player.getTimeout_percent() + "%");
+                            if (timeout960Model != null) {
+                                timeout960Model.addElement(player.getTimeout960_percent() + "%");
+                            }
+                        }
+                    }
+                });
             }
+
 
             @Override
             protected void done() {
                 try {
                     get();
-                    JOptionPane.showMessageDialog(gui, "Parsing complete. Players data fetched and processed.");
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(gui, "Error during parsing: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(gui,
+                            "Error during parsing: " + e.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };

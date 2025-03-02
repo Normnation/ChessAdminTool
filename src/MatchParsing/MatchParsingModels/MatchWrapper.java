@@ -1,4 +1,4 @@
-package teammatchparsing;
+package MatchParsing.MatchParsingModels;
 
 import java.util.Map;
 

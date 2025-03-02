@@ -1,16 +1,8 @@
-package clubAPIparsing;
+package ClubParsing.ClubParsingModels;
 
 import com.google.gson.annotations.SerializedName;
 
 public class PlayerStats {
-    private int rating;
-
-
-
-
-    public int getRating() {
-        return rating;
-    }
 
     @SerializedName("chess_daily")
     private ChessStat chessDaily;

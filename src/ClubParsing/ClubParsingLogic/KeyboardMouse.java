@@ -1,4 +1,6 @@
-package clubAPIparsing;
+package ClubParsing.ClubParsingLogic;
+
+import ClubParsing.ClubParsingGUI.ChessAdminGUI;
 
 import javax.swing.event.MouseInputListener;
 import java.awt.event.MouseEvent;

@@ -1,21 +1,17 @@
-package clubAPIparsing;
+package MatchParsing.MatchParsingGUI;
 
-import teammatchparsing.ChessClubParses;
+import ClubParsing.ClubParsingGUI.ChessAdminGUI;
+import MatchParsing.MatchParsingLogic.ChessClubParses;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.net.URI;
 
 public class MatchClubParsingGUI extends JFrame {
     String matchID = "";
     String teamName = "";
-
-    private final JProgressBar progressBar = new JProgressBar();
-
+    public JProgressBar progressBar = new JProgressBar();
     private final JList<String> usernameList = new JList<>();
     private final JList<String> timeoutList = new JList<>();
     private final JList<String> ratingList = new JList<>();
@@ -34,23 +30,37 @@ public class MatchClubParsingGUI extends JFrame {
 
     private final ChessClubParses chessClubParses = new ChessClubParses();
 
-    // Methods are referencing TOTAL members so it's never ending when it's done parsing.
     public void setProgressBarMax(int max) {
         progressBar.setMaximum(max);
         progressBar.setValue(0);
+        progressBar.setStringPainted(true);
+        progressBar.setString("0/" + max + " (0%)");
     }
 
     public void updateProgressBar(int value) {
         progressBar.setValue(value);
+        int percent = (int) ((value * 100.0f) / progressBar.getMaximum());
+        progressBar.setString(value + "/" + progressBar.getMaximum() + " (" + percent + "%)");
+
         if (progressBar.getValue() == progressBar.getMaximum()) {
+            progressBar.setString("Complete: " + value + "/" + progressBar.getMaximum() + " (100%)"); // Optionally update the final text
             JOptionPane.showMessageDialog(this,
                     "Parsing complete. Processed " + value + " players.");
         }
     }
 
+
     public MatchClubParsingGUI() {
         super("Match Club Parsing Tool");
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        // Will handle this later.
+//        this.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent e) {
+//                gui.matchParsingButton.setEnabled(true);
+//            }
+//        });
+        setMinimumSize(new Dimension(1250, 900));
         getContentPane().setBackground(Color.BLACK);
         setLayout(new BorderLayout(0, 0));
         ImageIcon backgroundImage = new ImageIcon("resources/MainChessImage.jpg");
@@ -71,7 +81,7 @@ public class MatchClubParsingGUI extends JFrame {
         progressBar.setVisible(true);
         progressBar.setPreferredSize(new Dimension(400, 20));
         progressBar.setBackground(Color.DARK_GRAY);
-        progressBar.setForeground(yellow);
+        progressBar.setForeground(Color.GREEN);
         progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
         topPanel.add(progressBar);
         topPanel.add(Box.createVerticalStrut(10));
@@ -109,48 +119,48 @@ public class MatchClubParsingGUI extends JFrame {
         clubNameField.setAlignmentX(Component.LEFT_ALIGNMENT);
         clubNameField.setMaximumSize(new Dimension(250, 30));
 
-        JButton parseButton = new JButton("Parse");
+        JButton parseButton = new JButton("Submit");
         parseButton.setFont(labelFont);
         parseButton.setForeground(purple);
         parseButton.setBackground(Color.BLACK);
         parseButton.setBorder(BorderFactory.createLineBorder(yellow, 2));
         parseButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        parseButton.setPreferredSize(new Dimension(200, 60));
 
-        parseButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                matchID = matchIDField.getText().trim();
-                teamName = clubNameField.getText().trim();
+        parseButton.setMaximumSize(new Dimension(200, 30));
+        parseButton.setPreferredSize(new Dimension(200, 30));
 
+        parseButton.addActionListener(e -> {
+            matchID = matchIDField.getText().trim();
+            teamName = clubNameField.getText().trim();
+            JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                    "Parsing players from " + teamName + " using match ID: " + matchID);
+            if (matchID.isEmpty() && teamName.isEmpty()) {
                 JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
-                        "Parsing complete. Returned " + ChessClubParses.totalMembersParsed + " players from " + teamName + " using match ID: " + matchID);
-                if (matchID.isEmpty() && teamName.isEmpty()) {
-                    JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
-                            "Both Match ID and Club Name fields are empty.");
-                } else if (matchID.isEmpty()) {
-                    JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
-                            "Match ID is empty.");
-                } else if (teamName.isEmpty()) {
-                    JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
-                            "Club Name is empty.");
-                } else {
-                    usernameListModel.clear();
-                    timeoutListModel.clear();
-                    ratingListModel.clear();
-                    timeout960ListModel.clear();
+                        "Both Match ID and Club Name fields are empty.");
+            } else if (matchID.isEmpty()) {
+                JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                        "Match ID is empty.");
+            } else if (teamName.isEmpty()) {
+                JOptionPane.showMessageDialog(MatchClubParsingGUI.this,
+                        "Club Name is empty.");
+            } else {
+                usernameListModel.clear();
+                timeoutListModel.clear();
+                ratingListModel.clear();
+                timeout960ListModel.clear();
 
-                    chessClubParses.fetchData(MatchClubParsingGUI.this, usernameListModel,
-                            ratingListModel,
-                            timeoutListModel,
-                            timeout960ListModel,
-                            matchID,
-                            teamName);
+                chessClubParses.fetchData(
+                        MatchClubParsingGUI.this,
+                        usernameListModel,
+                        ratingListModel,
+                        timeoutListModel,
+                        timeout960ListModel,
+                        matchID,
+                        teamName);
 
-                }
-                matchIDField.setText("");
-                clubNameField.setText("");
             }
+            matchIDField.setText("");
+            clubNameField.setText("");
         });
 
         usernameList.addMouseListener(new MouseAdapter() {
@@ -166,7 +176,9 @@ public class MatchClubParsingGUI extends JFrame {
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(MatchClubParsingGUI.this, "Unable to open profile page for player " + clickedUsername, "Unable to open profile", JOptionPane.ERROR_MESSAGE);
                     }
+
                 }
+
             }
         });
         rightPanel.add(matchIDLabel);

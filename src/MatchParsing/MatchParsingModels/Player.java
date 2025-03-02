@@ -1,9 +1,6 @@
-package teammatchparsing;
+package MatchParsing.MatchParsingModels;
 
 public class Player {
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     private String username;
     private double timeout_percent;

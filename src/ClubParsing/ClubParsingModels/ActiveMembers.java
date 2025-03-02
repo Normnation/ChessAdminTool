@@ -1,4 +1,4 @@
-package clubAPIparsing;
+package ClubParsing.ClubParsingModels;
 
 import com.google.gson.annotations.SerializedName;
 
