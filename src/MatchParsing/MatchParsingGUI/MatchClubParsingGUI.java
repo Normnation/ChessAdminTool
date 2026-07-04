@@ -43,9 +43,12 @@ public class MatchClubParsingGUI extends JFrame {
         progressBar.setString(value + "/" + progressBar.getMaximum() + " (" + percent + "%)");
 
         if (progressBar.getValue() == progressBar.getMaximum()) {
-            progressBar.setString("Complete: " + value + "/" + progressBar.getMaximum() + " (100%)"); // Optionally update the final text
+            progressBar.setString("Complete: " + value + "/" + progressBar.getMaximum() + " (100%)");
             JOptionPane.showMessageDialog(this,
                     "Parsing complete. Processed " + value + " players.");
+            JOptionPane.showMessageDialog(this,
+                    chessClubParses.playersNoDetails + " players had no rating or timeout record. Empty profiles", "No Record players", JOptionPane.INFORMATION_MESSAGE);
+
         }
     }
 

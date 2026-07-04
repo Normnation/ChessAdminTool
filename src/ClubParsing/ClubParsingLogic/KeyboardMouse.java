@@ -13,7 +13,6 @@ public class KeyboardMouse implements MouseInputListener {
         gui.getContentPane().addMouseListener(this);
     }
 
-    // Using for placement.
     @Override
     public void mouseClicked(MouseEvent e) {
 

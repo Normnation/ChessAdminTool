@@ -53,7 +53,7 @@ public class FileMenu implements ActionListener {
 
         JMenuItem Save = new JMenuItem("Save list");
         JMenuItem aboutThisProgram = new JMenuItem("About this application");
-        JMenuItem ContactMe = new JMenuItem("Contact");
+        JMenuItem ContactMe = new JMenuItem("Contact Pawnlings");
         JMenuItem helpOption = new JMenuItem("Report a Bug");
 
         JMenu featureExplanation = new JMenu("Feature explanation");

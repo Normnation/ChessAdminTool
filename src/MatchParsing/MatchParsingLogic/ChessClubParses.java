@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChessClubParses {
+    public int playersNoDetails = 1;
     private static final String PUB_MATCH_ENDPOINT = "https://api.chess.com/pub/match/";
     private final List<Player> allPlayers = new ArrayList<>();
 
@@ -68,18 +69,21 @@ public class ChessClubParses {
                         });
 
                         AtomicInteger progress = new AtomicInteger(0);
-                        clubTeam.getPlayers().forEach(player -> {
-                            processPlayer(player, gson);
-                            int currentProgress = progress.incrementAndGet();
+                            clubTeam.getPlayers().forEach(player -> {
 
-                            SwingUtilities.invokeLater(() -> {
-                                gui.updateProgressBar(currentProgress);
-                                gui.progressBar.setString(currentProgress + "/" + totalPlayers + " (" + (int) ((currentProgress * 100.0f) / totalPlayers) + "%)");
-                                if (currentProgress == totalPlayers) {
-                                    gui.progressBar.setVisible(false);
-                                }
+                                processPlayer(player, gson);
+                                int currentProgress = progress.incrementAndGet();
+
+                                SwingUtilities.invokeLater(() -> {
+                                    gui.updateProgressBar(currentProgress);
+                                    gui.progressBar.setString(currentProgress + "/" + totalPlayers + " (" + (int) ((currentProgress * 100.0f) / totalPlayers) + "%)");
+                                    if (currentProgress == totalPlayers) {
+                                        gui.progressBar.setVisible(false);
+                                    }
+                                });
                             });
-                        });
+
+
                         break;
                     }
                 }
@@ -110,20 +114,35 @@ public class ChessClubParses {
                         updatePlayerStats(player, pStats);
                     }
                 } catch (Exception ex) {
-                    System.out.println("Unable to map player details from endpoint.");
+                    playersNoDetails += 1;
                 }
             }
 
             private void updatePlayerStats(Player player, PlayerStats pStats) {
-                if (pStats.getChessDaily() != null && pStats.getChessDaily().getLast() != null) {
-                    player.setRating(pStats.getChessDaily().getLast().getRating());
+                if (pStats == null) {
+                    return;
                 }
-                if (pStats.getChessDaily().getRecord() != null) {
-                    player.setTimeout_percent(pStats.getChessDaily().getRecord().getTimeoutPercent());
+
+
+                if (pStats.getChessDaily() != null) {
+                    if (pStats.getChessDaily().getLast() != null) {
+                        player.setRating(pStats.getChessDaily().getLast().getRating());
+                    }
+                    if (pStats.getChessDaily().getRecord() != null) {
+                        player.setTimeout_percent(pStats.getChessDaily().getRecord().getTimeoutPercent());
+                    }
                 }
-                if (pStats.getChess960_daily() != null && pStats.getChess960_daily().getRecord() != null) {
-                    player.setTimeout960_percent(pStats.getChess960_daily().getRecord().getTimeoutPercent());
+
+
+                if (pStats.getChess960_daily() != null) {
+                    if (pStats.getChess960_daily().getLast() != null) {
+                        player.setDaily960Rating(pStats.getChess960_daily().getLast().getRating());
+                    }
+                    if (pStats.getChess960_daily().getRecord() != null) {
+                        player.setTimeout960_percent(pStats.getChess960_daily().getRecord().getTimeoutPercent());
+                    }
                 }
+
                 publish(player);
             }
 
@@ -141,7 +160,7 @@ public class ChessClubParses {
                     }
 
                     for (Player player : allPlayers) {
-                        if (player.getTimeout_percent() >= 25) {
+                        if (player.getTimeout_percent() >= 25 || player.getTimeout960_percent() >= 25)  {
                             usernameModel.addElement(player.getUsername());
                             ratingModel.addElement(String.valueOf(player.getRating()));
                             timeoutModel.addElement(player.getTimeout_percent() + "%");
@@ -154,17 +173,32 @@ public class ChessClubParses {
             }
 
 
-            @Override
             protected void done() {
                 try {
                     get();
+
+                    allPlayers.sort((p1, p2) -> Integer.compare(p2.getRating(), p1.getRating()));
+                    int count = 1;
+                    for (Player player : allPlayers) {
+                        if (player.getTimeout_percent() >= 25 || player.getTimeout960_percent() >= 25) {
+                            System.out.println(
+                                    count++ + ": " +
+                                            "@" + player.getUsername() +
+                                            " | R=" + player.getRating() +
+                                            " | 960=" + player.getDaily960Rating() +
+                                            " | T=" + player.getTimeout_percent() + "%" +
+                                            " | T960=" + player.getTimeout960_percent() + "%"
+                            );
+
+
+                        }
+                    }
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(gui,
-                            "Error during parsing: " + e.getMessage(),
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
                 }
             }
+
+
         };
 
         worker.execute();

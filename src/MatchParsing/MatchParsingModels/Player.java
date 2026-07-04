@@ -6,10 +6,7 @@ public class Player {
     private double timeout_percent;
     private int rating;
     private double timeout960_percent;
-
-    public void setRating(int rating) {
-        this.rating = rating;
-    }
+    private int daily960Rating; // add this
 
     public Player() {
     }
@@ -30,6 +27,18 @@ public class Player {
         return timeout960_percent;
     }
 
+    public int getDaily960Rating() { // getter
+        return daily960Rating;
+    }
+
+    public void setDaily960Rating(int daily960Rating) { // setter
+        this.daily960Rating = daily960Rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
     public void setTimeout_percent(double timeout_percent) {
         this.timeout_percent = timeout_percent;
     }
@@ -37,6 +46,4 @@ public class Player {
     public void setTimeout960_percent(double timeout960_percent) {
         this.timeout960_percent = timeout960_percent;
     }
-
-
 }
